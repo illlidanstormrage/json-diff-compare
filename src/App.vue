@@ -7,35 +7,14 @@
 
 <script>
 import DiffTree from "@/components/DiffTree";
+import {test1, test2} from '@/test.js';
 
 export default {
   name: 'App',
   data() {
     return {
-      oldData: [
-        {
-          a: 'b',
-          b: 'c',
-        },
-        {
-          a: 'a',
-          b: 'b',
-        }
-      ],
-      newData: [
-        {
-          a: 'a',
-          b: 'b'
-        },
-        {
-          a: 'b',
-          b: 'c',
-        },
-        {
-          a: 'a',
-          b: 'c',
-        }
-      ],
+      oldData: test1,
+      newData: test2,
     }
   },
   components: {
