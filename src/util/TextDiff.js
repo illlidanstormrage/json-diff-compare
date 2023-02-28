@@ -18,44 +18,6 @@ class DiffObj {
 }
 
 /**
- * 找到两个字符串的公共头部
- *
- * @param {String} text1
- * @param {String} text2
- * @returns {Number} 公共前缀长度
- */
-const getCommonPrefixLength = (text1, text2) => {
-  // 如果有字符串为空，直接返回
-  if (!text1 || !text2) {
-    return 0;
-  }
-  let len = 0;
-  for (let i = 0; i < text1.length && i < text2.length && text1[i] === text2[i]; i++) {
-    len++;
-  }
-  return len;
-}
-
-/**
- * 找到字符串公共尾部的长度
- *
- * @param {String} text1
- * @param {String} text2
- * @returns {Number} 公共前缀长度
- */
-const getCommonSuffixLength = (text1, text2) => {
-  // 如果字符串为空，直接返回
-  if (!text1 || !text2) {
-    return 0;
-  }
-  let len = 0;
-  for (let i = text1.length - 1, j = text2.length - 1; i >= 0 && j >=0 && text1[i] === text2[j]; i--, j--) {
-    len++;
-  }
-  return len;
-}
-
-/**
  * 回溯
  *
  * @param {Object} dMap
@@ -115,7 +77,7 @@ const myers = (text1, text2) => {
     {
       1: 0,
     }
-  ]
+  ];
   for (let d = 0; d <= len1 + len2; d++) {
     const temp = {};
     // 向右下的行进方向不计入循环
@@ -245,7 +207,37 @@ const computeDiff = (text1, text2) => {
   return mainDiff(text1, text2);
 }
 
-const getDiff = (text1, text2) => {
+const getTextDiff = (text1, text2) => {
+  /**
+   * 获取两个字符串的公共头部长度
+   */
+  const _getCommonPrefixLength = () => {
+    // 如果有字符串为空，直接返回
+    if (!text1 || !text2) {
+      return 0;
+    }
+    let len = 0;
+    for (let i = 0; i < text1.length && i < text2.length && text1[i] === text2[i]; i++) {
+      len++;
+    }
+    return len;
+  }
+
+  /**
+   * 找到字符串公共尾部的长度
+   */
+  const _getCommonSuffixLength = () => {
+    // 如果字符串为空，直接返回
+    if (!text1 || !text2) {
+      return 0;
+    }
+    let len = 0;
+    for (let i = text1.length - 1, j = text2.length - 1; i >= 0 && j >=0 && text1[i] === text2[j]; i--, j--) {
+      len++;
+    }
+    return len;
+  }
+
   if (text1 === null || text2 === null) {
     throw new Error('文本输入为null');
   }
@@ -257,8 +249,8 @@ const getDiff = (text1, text2) => {
     return [];
   }
   // 去掉text1和text2的前后缀相同部分的长度
-  const commonPrefixLen = getCommonPrefixLength(text1, text2);
-  const commonSuffixLen = getCommonSuffixLength(text1, text2);
+  const commonPrefixLen = _getCommonPrefixLength();
+  const commonSuffixLen = _getCommonSuffixLength();
   const commonPrefix = text1.substring(0, commonPrefixLen);
   const commonSuffix = text1.substring(text1.length - commonSuffixLen);
   // 掐头去尾后对前后缀不同的部分计算diff

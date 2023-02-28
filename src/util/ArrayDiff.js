@@ -7,13 +7,55 @@
  * @returns {Array}
  */
 export const getLCS = (arr1, arr2, callback = null) => {
-  const [len1, len2] = [arr1.length, arr2.length];
+  // 若有callback，则用callback来判断是否相等，否则使用 ===
+  const _isEqual = (val1, val2) => {
+    return callback ? callback(val1, val2) : val1 === val2;
+  }
+
+  /**
+   * 获取两个数组的公共头部长度
+   */
+  const _getCommonPrefixLength = () => {
+    // 如果有字符串为空，直接返回
+    if (arr1.length === 0 || arr2.length === 0) {
+      return 0;
+    }
+    let len = 0;
+    for (let i = 0; i < arr1.length && i < arr2.length
+    && _isEqual(arr1[i], arr2[i]); i++) {
+      len++;
+    }
+    return len;
+  }
+
+  /**
+   * 找到两个数组公共尾部的长度
+   */
+  const _getCommonSuffixLength = () => {
+    // 如果字符串为空，直接返回
+    if (arr1.length === 0 || arr2.length === 0) {
+      return 0;
+    }
+    let len = 0;
+    for (let i = arr1.length - 1, j = arr2.length - 1; i >= 0 && j >=0
+    && _isEqual(arr1[i], arr2[j]); i--, j--) {
+      len++;
+    }
+    return len;
+  }
+
+  const commonPrefixLength = _getCommonPrefixLength();
+  const commonSuffixLength = _getCommonSuffixLength();
+  const trimmedArr1 = arr1.slice(commonPrefixLength, arr1.length - commonSuffixLength);
+  const trimmedArr2 = arr2.slice(commonPrefixLength, arr2.length - commonSuffixLength);
+
+  const [len1, len2] = [trimmedArr1.length, trimmedArr2.length];
   // 初始化dp数组
   const dp = new Array(len1 + 1).fill(0).map(() => new Array(len2 + 1).fill(0));
   // 获取dp数组
   for (let i = 1; i <= len1; i++) {
     for (let j = 1; j <= len2; j++) {
-      if (callback ? !callback(arr1[i - 1], arr2[j - 1]) : arr1[i - 1] === arr2[j - 1]) {
+      if (_isEqual(trimmedArr1[i - 1], trimmedArr2[j - 1])) {
         dp[i][j] = dp[i - 1][j - 1] + 1;
       } else {
         dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
@@ -23,84 +65,16 @@ export const getLCS = (arr1, arr2, callback = null) => {
   // 根据dp数组反推路径，优先向上走
   const path = [];
   let [row, col] = [len1, len2];
-  while (path.length < dp[arr1.length][arr2.length]) {
+  while (path.length < dp[len1][len2]) {
     if (dp[row][col] === dp[row - 1][col]) {
       row--;
     } else if (dp[row][col] === dp[row][col-1]) {
       col--;
     } else {
-      path.unshift(arr1[row - 1]);
+      path.unshift(trimmedArr1[row - 1]);
       row--;
       col--;
     }
   }
-  return path;
-}
-
-/**
- *
- * @param {Array} arr1
- * @param {Array} arr2
- * @param {Function} callback
- */
-export const getArrDiff = (arr1, arr2, callback = null) => {
-  const trimCommonPrefix = () => {
-    let count = 0;
-    while (arr1.length > 0 && arr2.length > 0 && (callback ? !callback(arr1[0], arr2[0]) : arr1[0] === arr2[0])) {
-      arr1.shift();
-      arr2.shift();
-      count++;
-    }
-    return count;
-  }
-
-  const trimCommonSuffix = () => {
-    let count = 0;
-    while (arr1.length > 0 && arr2.length > 0 &&
-    (callback ? !callback(arr1[arr1.length - 1], arr2[arr2.length - 1]) : arr1[arr1.length - 1] === arr2[arr2.length - 1])) {
-      arr1.pop();
-      arr2.pop();
-      count++;
-    }
-    return count;
-  }
-
-  const lcs = getLCS(arr1, arr2, callback);
-  // 拷贝副本，初始化数据
-  let lcsCopy, arrCopy, offset, arrHead, lcsHead;
-  // 找到arr1和lcs的不同
-  const diffArr1 = [];
-  lcsCopy = JSON.parse(JSON.stringify(lcs));
-  arrCopy = JSON.parse(JSON.stringify(arr1));
-  // 去掉公共尾部
-  trimCommonSuffix();
-  // 去掉公共头部，会影响下标，用offset来记录偏移
-  offset = trimCommonPrefix();
-  // 初始化lcsHead栈顶元素
-  lcsHead = lcsCopy.shift();
-  while ((arrHead = arrCopy.shift()) !== undefined) {
-    // 存在差异，加入diffArr
-    if (callback ? callback(lcsHead, arrHead) : lcsHead !== arrHead) {
-      diffArr1.push(offset);
-    } else {
-      lcsHead = lcsCopy.shift();
-    }
-    offset++;
-  }
-  // 找到arr2和lcs的不同
-  const diffArr2 = [];
-  lcsCopy = JSON.parse(JSON.stringify(lcs));
-  arrCopy = JSON.parse(JSON.stringify(arr2));
-  trimCommonSuffix();
-  offset = trimCommonPrefix();
-  lcsHead = lcsCopy.shift();
-  while ((arrHead = arrCopy.shift()) !== undefined) {
-    if (callback ? callback(lcsHead, arrHead) : lcsHead !== arrHead) {
-      diffArr2.push(offset);
-    } else {
-      lcsHead = lcsCopy.shift();
-    }
-    offset++;
-  }
-  return [diffArr1, diffArr2];
+  return [...arr1.slice(0, commonPrefixLength), ...path, ...arr1.slice(arr1.length - commonSuffixLength)];
 }
