@@ -1,5 +1,5 @@
 import { getLCS } from './ArrayDiff'
-import { isDiff } from './ObjectDiff'
+import { isEqual } from './ObjectDiff'
 
 export const getType = (obj) => {
   return Object.prototype.toString.call(obj)
@@ -24,6 +24,33 @@ export const isSimpleData = (obj) => {
   return !isObject(obj) && !isArray(obj);
 }
 
+export const getKey = (item) => {
+  return item.key ? `${item.key}: ` : '';
+}
+
+export const getComma = (item) => {
+  return item.isLastLine ? '' : ',';
+}
+
+export const convertData = (data) => {
+  switch (getType(data)) {
+    case 'number':
+    case 'boolean':
+    case 'regexp':
+      return data.toString();
+    case 'null':
+      return 'null';
+    case 'undefined':
+      return 'undefined';
+    case 'function':
+      return 'function() {...}';
+    case 'string':
+      return `"${data.toString()}"`;
+    default:
+      return data;
+  }
+}
+
 /**
  * 根据新老数据生成带标记的集合
  *
@@ -39,116 +66,113 @@ export const isSimpleData = (obj) => {
  *  oldValue、newValue：记录前后数据，仅在changed状态下存在
  *  deep: 表示是否需要深度比较
  *  key: 记录数据的key，当数据为对象中的属性时存在
+ *  isLastLine: 是否为当前层级的最后一行
  */
 export const getMergedData = (oldData, newData) => {
   const res = [];
 
-  const convertData = (data) => {
-    switch (getType(data)) {
-      case 'number':
-      case 'boolean':
-      case 'regexp':
-        return data.toString();
-      case 'null':
-        return 'null';
-      case 'undefined':
-        return 'undefined';
-      case 'function':
-        return 'function() {...}';
-      case 'string':
-        return `${data.toString()}`;
-      default:
-        return data;
-    }
-  }
-
-  const getArrayMerged = () => {
-    const lcs = getLCS(oldData, newData, isDiff);
+  const _getArrayMerged = () => {
+    const lcs = getLCS(oldData, newData, isEqual);
     // 先将两个数组进行填充，便于显示
     let [oldIndex, newIndex] = [0, 0];
     let commonItem = lcs.shift();
     // 如果存在公共数据，开始循环
     while (commonItem) {
       // 新老数据均与公共数据的当前公共项不同，说明存在差异，对公共项之前的部分进行处理
-      while (isDiff(oldData[oldIndex], commonItem) && isDiff(newData[newIndex], commonItem)) {
+      while (!isEqual(oldData[oldIndex], commonItem) && !isEqual(newData[newIndex], commonItem)) {
         // 二者都还没到公共项，认为是当前位置的元素发生了改变
         res.push({
           changed: true,
           deep: !(isSimpleData(oldData[oldIndex]) && isSimpleData(newData[newIndex])),
-          oldValue: oldData[oldIndex++],
-          newValue: newData[newIndex++],
+          oldValue: oldData[oldIndex],
+          newValue: newData[newIndex],
         });
+        oldIndex++;
+        newIndex++;
       }
       // 还有未到达公共项的部分加入res，并标记
-      while (isDiff(oldData[oldIndex], commonItem)) {
+      while (!isEqual(oldData[oldIndex], commonItem)) {
         res.push({
           removed: true,
-          value: oldData[oldIndex++],
+          value: oldData[oldIndex],
         });
+        oldIndex++;
       }
-      while (isDiff(newData[newIndex], commonItem)) {
+      while (!isEqual(newData[newIndex], commonItem)) {
         res.push({
           added: true,
-          value: newData[newIndex++],
+          value: newData[newIndex],
         });
+        newIndex++;
       }
       // 将公共点加入res
       res.push({
         equal: true,
         value: commonItem,
+        isLastLine: (oldIndex === oldData.length - 1 && newIndex === newData.length - 1),
       });
       oldIndex++;
       newIndex++;
       commonItem = lcs.shift();
     }
+    // 最后一个公共元素之后的数据加入结果
     while (oldIndex < oldData.length && newIndex < newData.length) {
       res.push({
         changed: true,
         deep: !(isSimpleData(oldData[oldIndex]) && isSimpleData(newData[newIndex])),
-        oldValue: oldData[oldIndex++],
-        newValue: newData[newIndex++],
+        oldValue: oldData[oldIndex],
+        newValue: newData[newIndex],
+        isLastLine: (oldIndex === oldData.length - 1 && newIndex === newData.length - 1),
       });
+      oldIndex++;
+      newIndex++;
     }
     while (oldIndex < oldData.length) {
       res.push({
         removed: true,
-        value: oldData[oldIndex++],
+        value: oldData[oldIndex],
+        isLastLine: oldIndex === oldData.length - 1,
       });
+      oldIndex++
     }
     while (newIndex < newData.length) {
       res.push({
         added: true,
-        value: newData[newIndex++],
+        value: newData[newIndex],
+        isLastLine: newIndex === newIndex.length - 1,
       });
+      newIndex++;
     }
   }
 
-  const getObjectMerged = () => {
+  const _getObjectMerged = () => {
     const oldKeySet = Object.keys(oldData);
     const newKeySet = Object.keys(newData);
     const commonKeySet = oldKeySet.filter(key => newKeySet.includes(key));
     const oldKeyDiffSet = oldKeySet.filter(key => !newKeySet.includes(key));
     const newKeyDiffSet = newKeySet.filter(key => !oldKeySet.includes(key));
     // 键名有差异直接添加差异
-    oldKeyDiffSet.forEach(key => {
+    oldKeyDiffSet.forEach((key, index) => {
       res.push({
         removed: true,
         key: key,
         value: convertData(oldData[key]),
+        isLastLine: (index === oldData.length - 1),
       });
     });
-    newKeyDiffSet.forEach(key => {
+    newKeyDiffSet.forEach((key, index) => {
       res.push({
         changed: true,
         deep: !(isSimpleData(oldData[key]) && isSimpleData(newData[key])),
         key: key,
         oldValue: convertData(oldData[key]),
         newValue: convertData(newData[key]),
+        isLastLine: (index === newData.length - 1),
       });
     });
     // 对键名相同的部分比较
     commonKeySet.forEach(key => {
-      if (isDiff(oldData[key], newData[key])) {
+      if (!isEqual(oldData[key], newData[key])) {
         res.push({
           changed: true,
           deep: !(isSimpleData(oldData[key]) && isSimpleData(newData[key])),
@@ -194,9 +218,9 @@ export const getMergedData = (oldData, newData) => {
   } else {
     // 数组类型
     if (isArray(oldData)) {
-      getArrayMerged();
+      _getArrayMerged();
     } else if (isObject(oldData)) {
-      getObjectMerged();
+      _getObjectMerged();
     }
   }
   return res;
