@@ -1,123 +1,75 @@
 <template>
-  <div class="main-container">
-    <div v-for="(item, index) in mergedData" :key="index" class="content-container">
-      <!-- 如果相同则直接输出到屏幕 -->
-      <template v-if="item.equal">
-        <p class="item-equal" v-if="isObject(item.value)">
-          {{ item.key ? item.key + ': {' : '{' }}{{ item.value }}
-          <DiffTreeNode
-            v-for="(element, key) in item.value"
-            :oldData="element"
-            :newData="element"
-            :key="key"
-          ></DiffTreeNode>
-        </p>
-        <p class="item-equal" v-else-if="isArray(item.value)">
-          {{ item.key ? item.key + ': [' : '[' }}
-          <DiffTreeNode
-            v-for="(element, eleIndex) in item.value"
-            :oldData="element"
-            :newData="element"
-            :key="eleIndex"
-          ></DiffTreeNode>
-        </p>
-        <p class="item-equal" v-else>{{ item.key ? item.key + ': ' : '' }}{{ item.value }}</p>
-      </template>
-      <!-- 数据有差异 -->
-      <template v-else>
-        <!-- 数据为新增 -->
-        <div v-if="item.added">
-          <p class="item-added" v-if="isObject(item.value)">
-            {{ item.key ? item.key + ': {' : '{' }}{{ item.value }}
-            <DiffTreeNode
-                v-for="(element, key) in item.value"
-                :oldData="element"
-                :newData="element"
-                :key="key"
-            ></DiffTreeNode>
-          </p>
-          <p class="item-added" v-else-if="isArray(item.value)">
-            {{ item.key ? item.key + ': [' : '[' }}
-            <DiffTreeNode
-                v-for="(element, eleIndex) in item.value"
-                :oldData="element"
-                :newData="element"
-                :key="eleIndex"
-            ></DiffTreeNode>
-          </p>
-          <p class="item-added">{{ item.key ? item.key + ': ' : ''}}{{ item.value }}</p>
-        </div>
-        <!-- 数据为移除 -->
-        <div v-else-if="item.removed">
-          <p class="item-removed" v-if="isObject(item.value)">
-            {{ item.key ? item.key + ': {' : '{' }}{{ item.value }}
-            <DiffTreeNode
-              v-for="(element, key) in item.value"
-              :oldData="element"
-              :newData="element"
-              :key="key"
-            ></DiffTreeNode>
-          </p>
-          <p class="item-removed" v-else-if="isArray(item.value)">
-            {{ item.key ? item.key + ': [' : '[' }}
-            <DiffTreeNode
-              v-for="(element, eleIndex) in item.value"
-              :oldData="element"
-              :newData="element"
-              :key="eleIndex"
-            ></DiffTreeNode>
-          </p>
-          <p class="item-removed">{{ item.key ? item.key + ': ' : ''}}{{ item.value }}</p>
-        </div>
-        <!-- 数据为改动 -->
-        <div v-else-if="item.changed">
-          <div v-if="item.deep">
-            {{ item.key ? item.key + ': ' : '' }}
-            <DiffTreeNode
-              :oldData="item.oldValue"
-              :newData="item.newValue"
-            ></DiffTreeNode>
-          </div>
-          <div v-else>
-            <p class="item-removed">{{ item.key ? item.key + ': ' : ''}}{{ item.oldValue }}</p>
-            <p class="item-added">{{ item.key ? item.key + ': ' : ''}}{{ item.newValue }}</p>
-          </div>
-        </div>
-      </template>
+  <div>
+    <!-- 主体部分 -->
+    <div v-for="(item, key) in mergedData" :key="key" class="indent">
+      <!-- 如果相同则直接输出 -->
+      <BaseTree
+        v-if="item.equal"
+        :data="item"
+        :current-key="isObject(item) ? key : ''"
+        expand
+      ></BaseTree>
+      <!-- 数据为新增 -->
+      <BaseTree
+        v-else-if="item.added"
+        :data="item"
+        :current-key="isObject(item) ? key : ''"
+        expand
+        class="item-added"
+      ></BaseTree>
+      <!-- 数据为移除 -->
+      <BaseTree
+        v-else-if="item.removed"
+        :data="item"
+        :current-key="isObject(item) ? key : ''"
+        expand
+        class="item-removed"
+      ></BaseTree>
+      <!-- 数据为改动 -->
+      <DiffTreeNode
+        v-else-if="item.changed"
+        :oldData="item.oldValue"
+        :newData="item.newValue"
+      ></DiffTreeNode>
     </div>
   </div>
 </template>
 <script>
-import { getMergedData, getType, isObject, isArray } from "@/util/lineDiffUtil";
+import { getMergedData, getType, isObject, isArray, isSimpleData } from "@/util/methods";
+import BaseTree from './BaseTree';
 
 export default {
   name: 'DiffTreeNode',
   data() {
     return {
-
+      mergedData: null,
     }
   },
+  components: {BaseTree},
+  mounted() {
+    this.initMergedData();
+  },
   props: {
-    oldData: {},
-    newData: {},
+    oldData: {
+      type: [Object, Array],
+    },
+    newData: {
+      type: [Object, Array],
+    },
   },
   methods: {
     getType,
     isObject,
     isArray,
+    isSimpleData,
+    initMergedData() {
+      this.mergedData = getMergedData(this.oldData, this.newData);
+    },
   },
-  computed: {
-    mergedData() {
-      return getMergedData(this.oldData, this.newData);
-    }
-  }
 }
 </script>
 <style scoped>
-.main-container {
-
-}
-.content-container {
+.indent {
   margin-left: 15px;
 }
 .content-container p {
@@ -128,8 +80,5 @@ export default {
 }
 .item-added {
   background-color: #dee7bf;
-}
-.item-equal {
-
 }
 </style>

@@ -1,9 +1,9 @@
 <template>
   <div>
     <DiffTreeNode
-        :newData="newData"
-        :oldData="oldData">
-    </DiffTreeNode>
+      :newData="newData"
+      :oldData="oldData"
+    ></DiffTreeNode>
   </div>
 </template>
 
