@@ -1,18 +1,15 @@
 <template>
   <div>
-    <DiffTree
-      v-if="false"
+    <DiffTreeLineMode
       :newData="test1"
       :oldData="test2"
-    ></DiffTree>
-    <BaseTree :data="test3"></BaseTree>
+    ></DiffTreeLineMode>
   </div>
 </template>
 
 <script>
-import DiffTree from "@/components/DiffTree";
-import {test1, test2, test3, test4} from '@/test.js';
-import BaseTree from "@/components/BaseTree";
+import DiffTreeLineMode from "@/components/DiffTreeLineMode";
+import {test1, test2} from '@/test.js';
 
 export default {
   name: 'App',
@@ -20,13 +17,10 @@ export default {
     return {
       test1,
       test2,
-      test3,
-      test4,
     }
   },
   components: {
-    DiffTree,
-    BaseTree,
+    DiffTreeLineMode,
   }
 }
 </script>
