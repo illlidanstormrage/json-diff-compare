@@ -1,8 +1,8 @@
 <template>
   <div>
     <DiffTreeLineMode
-      :newData="test1"
-      :oldData="test2"
+      :oldData="test1"
+      :newData="test2"
     ></DiffTreeLineMode>
   </div>
 </template>
@@ -10,6 +10,7 @@
 <script>
 import DiffTreeLineMode from "@/components/DiffTreeLineMode";
 import {test1, test2} from '@/test.js';
+import {getLCS} from "@/util/ArrayDiff";
 
 export default {
   name: 'App',
@@ -21,7 +22,10 @@ export default {
   },
   components: {
     DiffTreeLineMode,
-  }
+  },
+  methods: {
+    getLCS,
+  },
 }
 </script>
 
