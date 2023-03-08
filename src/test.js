@@ -15,9 +15,9 @@ export const test1 = {
     30
   ],
   "StringArray": [
+    "oxygen",
     "Oxygen",
-    "Oxygen",
-    "Carbon",
+    "carbon",
     "Carbon"
   ],
   "multipleTypesArray": true,
@@ -62,15 +62,20 @@ export const test2 = {
     30
   ],
   "StringArray": [
+    "oxygen1",
     "Oxygen",
-    "Carbon",
+    "xarbon",
     "Carbon"
   ],
   "multipleTypesArray": true,
   "objArray": [
     {
       "class": "lower",
-      "age": 4
+      "age": 5
+    },
+    {
+      "class": "higher",
+      "age": 9
     },
     {
       "class": "lower",

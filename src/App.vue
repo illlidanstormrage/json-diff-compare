@@ -1,16 +1,16 @@
 <template>
   <div>
-    <DiffTreeLineMode
+    <DiffDetailUnified
       :oldData="test1"
       :newData="test2"
-    ></DiffTreeLineMode>
+    ></DiffDetailUnified>
   </div>
 </template>
 
 <script>
-import DiffTreeLineMode from "@/components/DiffTreeLineMode";
 import {test1, test2} from '@/test.js';
 import {getLCS} from "@/util/ArrayDiff";
+import DiffDetailUnified from "@/components/DiffDetailUnified";
 
 export default {
   name: 'App',
@@ -21,7 +21,7 @@ export default {
     }
   },
   components: {
-    DiffTreeLineMode,
+    DiffDetailUnified,
   },
   methods: {
     getLCS,

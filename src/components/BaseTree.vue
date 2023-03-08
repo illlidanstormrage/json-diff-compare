@@ -1,15 +1,30 @@
 <template>
   <!-- 普通数据 -->
-  <div v-if="isSimpleData(data)">{{ currentKey ? `${currentKey}: ` : '' }}{{ convertData(data) }}{{ isLastLine ? '' : ',' }}</div>
+  <div v-if="isSimpleData(data)">
+    <span
+      :style="`padding-left:${level*15}px;`"
+      :class="{
+        'item-added': status === 'added',
+        'item-removed': status === 'removed',
+      }"
+    >
+      {{ currentKey ? `${currentKey}: ` : '' }}{{ convertData(data) }}{{ isLastLine ? '' : ',' }}
+    </span>
+  </div>
   <div v-else>
-    {{ currentKey ? `${currentKey}: ` : '' }}
-    <!-- 前缀 -->
-    <el-icon :size="15" class="prefix-icon" @click="changeVisible">
-      <CaretBottom v-if="visible"/>
-      <CaretRight v-else/>
-    </el-icon>
-    <span v-show="isArray(data)">{{ visible ? '[' : `[...]${isLastLine ? '' : ','}` }}</span>
-    <span v-show="isObject(data)">{{ visible ? '{' : `{...}${isLastLine ? '' : ','}` }}</span>
+    <span
+      :style="`padding-left:${level*15}px;`"
+      :class="{
+        'item-added': status === 'added',
+        'item-removed': status === 'removed',
+      }"
+    >
+      {{ currentKey ? `${currentKey}: ` : '' }}
+      <!-- 前缀 -->
+      {{ isArray(data) ? '[' : isObject(data) ? '{' : '' }}
+      {{ !visible ? '...' : '' }}
+      {{ isArray(data) && !visible ? '],' : isObject(data) && !visible ? '},' : '' }}
+    </span>
     <!-- 内容 -->
     <BaseTree
       v-for="(item, key) in data"
@@ -19,11 +34,28 @@
       :is-last-line="lastLine(key)"
       :current-key="isObject(data) ? key : ''"
       :expand="expand"
-      :class="{'indent': currentKey, 'indent2': !currentKey}"
+      :level="level + 1"
+      :status="status"
     ></BaseTree>
     <!-- 后缀 -->
-    <div v-show="visible" v-if="isArray(data)" :class="{'indent': !currentKey}">{{ isLastLine ? ']' : '],' }}</div>
-    <div v-show="visible" v-else-if="isObject(data)" :class="{'indent': !currentKey}">{{ isLastLine ? '}' : '},' }}</div>
+    <span
+      v-show="visible"
+      v-if="isArray(data)"
+      :style="`padding-left:${level*15}px;`"
+      :class="{
+        'item-added': status === 'added',
+        'item-removed': status === 'removed',
+      }"
+    >{{ isLastLine ? ']' : '],' }}</span>
+    <span
+      v-show="visible"
+      v-else-if="isObject(data)"
+      :style="`padding-left:${level*15}px;`"
+      :class="{
+        'item-added': status === 'added',
+        'item-removed': status === 'removed',
+      }"
+    >{{ isLastLine ? '}' : '},' }}</span>
   </div>
 </template>
 
@@ -52,6 +84,14 @@ export default {
       type: Boolean,
       default: true,
     },
+    level: {
+      type: Number,
+      default: 1,
+    },
+    status: {
+      enum: ['equal', 'added', 'removed'],
+      default: 'equal',
+    }
   },
   mounted() {
     this.initVisibleMap();
@@ -74,14 +114,14 @@ export default {
 }
 </script>
 <style scoped>
-.prefix-icon {
-  cursor: pointer;
-  vertical-align: middle;
+span {
+  display: inline-flex;
+  width: 100%;
 }
-.indent {
-  margin-left: 15px;
+.item-removed {
+  background-color: #fce6e6;
 }
-.indent2 {
-  margin-left: 30px;
+.item-added {
+  background-color: #dee7bf;
 }
 </style>
